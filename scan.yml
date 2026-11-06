@@ -1,0 +1,28 @@
+name: crypto-scanner
+
+on:
+  schedule:
+    - cron: "10 0 * * *"   # daily close scan (00:10 UTC = 05:10 Pakistan)
+    - cron: "5 * * * *"    # har ghante level-cross + news
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "daily ya hourly"
+        default: "daily"
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run scanner
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          COINGECKO_KEY: ${{ secrets.COINGECKO_KEY }}
+          MODE: ${{ github.event.inputs.mode || (github.event.schedule == '10 0 * * *' && 'daily' || 'hourly') }}
+        run: python scanner.py "$MODE"
